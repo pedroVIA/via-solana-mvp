@@ -1,0 +1,34 @@
+[toolchain]
+anchor_version = "0.31.1"
+solana_version = "2.2.21"
+package_manager = "npm"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+
+[programs.devnet]
+message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+
+[programs.testnet]
+message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+
+[programs.mainnet]
+message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "devnet"
+wallet = "./keypairs/authority.json"
+
+[scripts]
+test = "npm test"
+
+[test]
+startup_wait = 10000
+upgradeable = true

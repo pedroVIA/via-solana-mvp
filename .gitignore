@@ -1,0 +1,54 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+target/
+dist/
+build/
+out/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test coverage
+coverage/
+.nyc_output/
+
+# Anchor & Solana
+.anchor/
+test-ledger/
+*.so
+*.keypair
+
+# Keypairs - IMPORTANT: Never commit keypairs to version control
+keypairs/
+*.json
+!package.json
+!tsconfig.json
+!setup-config.example.json
+!network-config.json
+
+# Temporary and cache files
+*.tmp
+*.temp
+.tmp/
+.cache/
+*.tsbuildinfo

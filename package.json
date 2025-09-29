@@ -1,0 +1,38 @@
+{
+  "name": "@via-labs/message-gateway-v4",
+  "version": "1.0.0",
+  "description": "Via Labs V4 cross-chain messaging protocol for Solana",
+  "author": "Via Labs",
+  "license": "MIT",
+  "type": "module",
+  "private": true,
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "scripts": {
+    "build": "anchor build",
+    "typecheck": "tsc --noEmit",
+    "deploy": "anchor deploy --program-name message_gateway_v4 --program-keypair ./keypairs/program.json",
+    "setup": "npx tsx scripts/setup.ts",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.31.1",
+    "borsh": "^2.0.0",
+    "dotenv": "^16.4.5",
+    "tsx": "^4.7.0"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.0.2",
+    "@eslint/js": "^9.17.0",
+    "@types/bn.js": "^5.2.0",
+    "@types/node": "^22.10.5",
+    "@typescript-eslint/eslint-plugin": "^8.19.1",
+    "@typescript-eslint/parser": "^8.19.1",
+    "eslint": "^9.17.0",
+    "typescript": "^5.7.2",
+    "typescript-eslint": "^8.19.1"
+  }
+}
