@@ -5,7 +5,8 @@ This file provides guidance to Claude Code when working with the Via Labs V4 Sol
 ## Project Overview
 
 Via Labs V4 cross-chain messaging protocol for Solana. Uses two-transaction atomic replay protection
-pattern with three-layer signature validation (VIA/Chain/Project). Production-ready implementation.
+pattern with three-layer signature validation (Via/Chain/Project). Production-ready implementation with
+TypeScript SDK for seamless integration.
 
 ## 🚨 Critical Safety Rules
 
@@ -13,16 +14,13 @@ pattern with three-layer signature validation (VIA/Chain/Project). Production-re
 2. **NEVER change signature validation logic** without comprehensive testing
 3. **NEVER alter the two-transaction pattern** - core security mechanism
 4. **NEVER modify account sizes** - MessageGateway(42), TxIdPda(17) are fixed
-5. **ALWAYS build and verify after core changes** - `anchor build`
+5. **ALWAYS build and verify after core changes** - `npm run build`
 
 ## Essential Commands
 
 ```bash
 # Development
-anchor build                    # Build program
-anchor clean                    # Clean artifacts (preserves keypairs)
-
-# Deployment (uses Anchor.toml configuration)
+npm run build                   # Build program (uses anchor build)
 npm run deploy                  # Deploy to configured cluster
 npm run setup                   # Post-deployment initialization
 
@@ -41,24 +39,58 @@ npm run setup                   # Post-deployment initialization
 - SignerRegistry: `["signer_registry", registry_type, chain_id]`
 
 ### Three-Layer Security
-1. **VIA Layer**: Via Labs core signers (required)
+1. **Via Layer**: Via Labs core signers (required)
 2. **Chain Layer**: Chain-specific validators (required)
 3. **Project Layer**: Application signers (optional)
 
 Each layer validated independently. Signers can belong to multiple layers.
 
+## SDK Usage (Primary Interface)
+
+**All interactions should use the TypeScript SDK** located in `packages/via-labs-sdk/`. The SDK provides atomic operations for gateway initialization, message sending, signer management, and cross-chain processing.
+
+```typescript
+import { ViaLabsSDK } from '@via-labs/sdk';
+
+const sdk = new ViaLabsSDK();
+
+// Example: Initialize gateway
+const tx = await sdk.initializeGateway(chainId);
+
+// Example: Send cross-chain message
+const tx = await sdk.sendMessage({
+  txId, recipient, destChainId, chainData, confirmations
+});
+```
+
+The SDK handles all PDA derivation, signature validation, and transaction construction. **Do not use raw Anchor functions** - use the SDK methods instead.
+
 ## Key Files
 
 ```
-programs/message_gateway_v4/src/
-├── lib.rs                    # 18 instruction handlers
-├── instructions/
-│   ├── create_tx_pda.rs     # TX1 - replay protection
-│   ├── process_message.rs   # TX2 - message processing
-│   └── signer_registry.rs   # Three-layer management
-└── utils/
-    ├── hash.rs              # Keccak256 for cross-chain
-    └── signature.rs         # Ed25519 validation (~10K CU/sig)
+├── packages/via-labs-sdk/    # TypeScript SDK (PRIMARY INTERFACE)
+│   ├── src/
+│   │   ├── sdk.ts           # Main SDK class
+│   │   ├── connection.ts    # Anchor program connection
+│   │   ├── pdas.ts          # PDA derivation utilities
+│   │   ├── types.ts         # Type definitions
+│   │   └── constants.ts     # Chain IDs and constants
+├── programs/message_gateway_v4/src/
+│   ├── lib.rs               # Main entry point (18 instructions)
+│   ├── instructions/
+│   │   ├── initialize.rs    # Gateway initialization
+│   │   ├── create_tx_pda.rs # Replay protection (TX1)
+│   │   ├── process_message.rs # Message processing (TX2)
+│   │   └── signer_registry.rs # Signer management
+│   ├── state/
+│   │   ├── gateway.rs       # Gateway account (42 bytes)
+│   │   ├── tx_id.rs         # TxId PDA (17 bytes)
+│   │   └── signer_registry.rs # Registry state
+│   └── utils/
+│       ├── hash.rs          # Keccak256 hashing
+│       └── signature.rs     # Ed25519 validation
+└── tools/                   # Internal development tools
+    └── setup.ts             # Deployment setup workflow
 ```
 
 ## What NOT to Do

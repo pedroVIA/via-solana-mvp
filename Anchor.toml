@@ -8,16 +8,16 @@ resolution = true
 skip-lint = false
 
 [programs.localnet]
-message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+message_gateway_v4 = "J18YFrPAxxR9aWFXqsU87y1TrxBqycGS8Fv3ApMXAakA"
 
 [programs.devnet]
-message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+message_gateway_v4 = "J18YFrPAxxR9aWFXqsU87y1TrxBqycGS8Fv3ApMXAakA"
 
 [programs.testnet]
-message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+message_gateway_v4 = "J18YFrPAxxR9aWFXqsU87y1TrxBqycGS8Fv3ApMXAakA"
 
 [programs.mainnet]
-message_gateway_v4 = "B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx"
+message_gateway_v4 = "J18YFrPAxxR9aWFXqsU87y1TrxBqycGS8Fv3ApMXAakA"
 
 [registry]
 url = "https://api.apr.dev"

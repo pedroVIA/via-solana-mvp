@@ -77,7 +77,7 @@ pub fn handler(
     )?;
     
     msg!(
-        "Message signature validation passed: VIA={}, Chain={}, Project={}, tx_id={}",
+        "Message signature validation passed: Via={}, Chain={}, Project={}, tx_id={}",
         validation_result.via_signatures,
         validation_result.chain_signatures,
         validation_result.project_signatures,
@@ -125,11 +125,11 @@ pub struct ProcessMessage<'info> {
     )]
     pub tx_id_pda: Account<'info, TxIdPDA>,
     
-    /// VIA signer registry for VIA-level validation
+    /// Via signer registry for Via-level validation
     #[account(
         seeds = [
             SIGNER_REGISTRY_SEED,
-            &crate::state::SignerRegistryType::VIA.discriminant().to_le_bytes(),
+            &crate::state::SignerRegistryType::Via.discriminant().to_le_bytes(),
             dest_chain_id.to_le_bytes().as_ref()
         ],
         bump = via_registry.bump

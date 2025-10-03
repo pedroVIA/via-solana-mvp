@@ -1,15 +1,16 @@
 # Via Labs V4 - Solana Message Gateway
 
-A production-ready cross-chain messaging protocol for Solana, enabling secure message passing between Solana and Avalanche with enterprise-grade replay protection and multi-layer security validation.
+A production-ready cross-chain messaging protocol for Solana, enabling secure message passing between Solana and Avalanche with enterprise-grade replay protection and multi-layer security validation. Includes a TypeScript SDK for seamless integration.
 
 ## Features
 
 - **🔒 Atomic Replay Protection**: Two-transaction pattern with PDA-based replay prevention
-- **🛡️ Three-Layer Security**: VIA Labs validators + Chain validators + Project-specific signers
+- **🛡️ Three-Layer Security**: Via Labs validators + Chain validators + Project-specific signers
 - **⚡ High Performance**: Optimized to ~107K compute units (well under Solana's 200K limit)
 - **🌍 Cross-Chain Ready**: Support for Solana and Avalanche with standardized message format
 - **🚀 Production Deployment**: Automated deployment system with health monitoring
 - **✅ Production Ready**: Clean codebase with automated deployment pipeline
+- **📦 TypeScript SDK**: Professional SDK for all protocol interactions
 
 ## Quick Start
 
@@ -32,20 +33,16 @@ cd via_solana_mvp/message_gateway_v4
 npm install
 
 # Build the program
-anchor build
+npm run build
 ```
 
 ### Local Development
 
 ```bash
-# Start local validator
-anchor localnet
-
-# Build the program
-anchor build
-
-# Deploy to any network (configure desired network in Anchor.toml [provider] cluster)
+# Build and deploy
+npm run build
 npm run deploy
+npm run setup
 ```
 
 ### Deployment
@@ -82,7 +79,7 @@ The protocol uses a novel two-transaction pattern to prevent replay attacks:
 
 ```
 ┌─────────────┐
-│  VIA Layer  │ ← Via Labs core validators (required)
+│  Via Layer  │ ← Via Labs core validators (required)
 ├─────────────┤
 │ Chain Layer │ ← Chain-specific validators (required)
 ├─────────────┤
@@ -92,81 +89,129 @@ The protocol uses a novel two-transaction pattern to prevent replay attacks:
 
 Each layer has independent threshold validation with configurable signer registries.
 
-### Program Structure
+### Project Structure
 
 ```
-programs/message_gateway_v4/src/
-├── lib.rs                    # Main entry point (18 instructions)
-├── instructions/
-│   ├── initialize.rs         # Gateway initialization
-│   ├── create_tx_pda.rs      # Replay protection (TX1)
-│   ├── process_message.rs    # Message processing (TX2)
-│   └── signer_registry.rs    # Signer management
-├── state/
-│   ├── gateway.rs            # Gateway account (42 bytes)
-│   ├── tx_id.rs              # TxId PDA (17 bytes)
-│   └── signer_registry.rs    # Registry state
-└── utils/
-    ├── hash.rs               # Keccak256 hashing
-    └── signature.rs          # Ed25519 validation
+├── packages/via-labs-sdk/    # TypeScript SDK (PRIMARY INTERFACE)
+│   ├── src/
+│   │   ├── sdk.ts           # Main SDK class
+│   │   ├── connection.ts    # Anchor program connection
+│   │   ├── pdas.ts          # PDA derivation utilities
+│   │   ├── types.ts         # Type definitions
+│   │   └── constants.ts     # Chain IDs and constants
+├── programs/message_gateway_v4/src/
+│   ├── lib.rs               # Main entry point (18 instructions)
+│   ├── instructions/
+│   │   ├── initialize.rs    # Gateway initialization
+│   │   ├── create_tx_pda.rs # Replay protection (TX1)
+│   │   ├── process_message.rs # Message processing (TX2)
+│   │   └── signer_registry.rs # Signer management
+│   ├── state/
+│   │   ├── gateway.rs       # Gateway account (42 bytes)
+│   │   ├── tx_id.rs         # TxId PDA (17 bytes)
+│   │   └── signer_registry.rs # Registry state
+│   └── utils/
+│       ├── hash.rs          # Keccak256 hashing
+│       └── signature.rs     # Ed25519 validation
+└── tools/                   # Internal development tools
+    └── setup.ts             # Deployment setup workflow
 ```
 
 ## Usage Examples
 
+**All interactions use the TypeScript SDK** - raw Anchor functions are not recommended.
+
+### Basic SDK Setup
+
+```typescript
+import { ViaLabsSDK } from '@via-labs/sdk';
+import { SOLANA_CHAIN_ID, AVALANCHE_CHAIN_ID } from '@via-labs/sdk/constants';
+import { BN } from '@coral-xyz/anchor';
+
+const sdk = new ViaLabsSDK();
+```
+
+### Initialize Gateway and Registries
+
+```typescript
+// Initialize gateway for a chain
+const initTx = await sdk.initializeGateway(SOLANA_CHAIN_ID);
+console.log('Gateway initialized:', initTx);
+
+// Initialize signer registries (Via, Chain, Project layers)
+const viaTx = await sdk.initializeRegistry('via', SOLANA_CHAIN_ID);
+const chainTx = await sdk.initializeRegistry('chain', SOLANA_CHAIN_ID);
+const projectTx = await sdk.initializeRegistry('project', SOLANA_CHAIN_ID);
+```
+
 ### Sending a Cross-Chain Message
 
 ```typescript
-import { Program } from '@coral-xyz/anchor';
-import { MessageGatewayV4 } from './target/types/message_gateway_v4';
-
-// Send message from Avalanche to Solana
-const tx = await program.methods
-  .sendMessage(
-    sourceChainId,
-    destinationChainId,
-    sender,
-    recipient,
-    messageData
-  )
-  .accounts({
-    gateway: gatewayPDA,
-    counter: counterPDA,
-    authority: wallet.publicKey,
-  })
-  .rpc();
+const sendTx = await sdk.sendMessage({
+  txId: new BN(12345),
+  recipient: Buffer.from('recipient_address_here'),
+  destChainId: AVALANCHE_CHAIN_ID,
+  chainData: Buffer.from('message_data'),
+  confirmations: 10
+});
+console.log('Message sent:', sendTx);
 ```
 
-### Processing Incoming Message
+### Processing Incoming Message (Two-Transaction Pattern)
 
 ```typescript
 // Step 1: Create replay protection PDA
-await program.methods
-  .createTxPda(sourceChainId, txId, messageHash)
-  .accounts({
-    txIdPda: txIdPDA,
-    payer: wallet.publicKey,
-  })
-  .rpc();
+const createTx = await sdk.createTxPda(
+  new BN(12345),           // txId
+  AVALANCHE_CHAIN_ID,      // sourceChainId
+  SOLANA_CHAIN_ID,         // destChainId
+  Buffer.from('sender'),   // sender
+  Buffer.from('recipient'), // recipient
+  Buffer.from('onChain'),  // onChainData
+  Buffer.from('offChain'), // offChainData
+  []                       // signatures
+);
 
 // Step 2: Process message with signatures
-await program.methods
-  .processMessage(message, signatures)
-  .accounts({
-    gateway: gatewayPDA,
-    txIdPda: txIdPDA,
-    // ... signer registries
-  })
-  .rpc();
+const processTx = await sdk.processMessage(
+  new BN(12345),           // txId
+  AVALANCHE_CHAIN_ID,      // sourceChainId
+  SOLANA_CHAIN_ID,         // destChainId
+  Buffer.from('sender'),   // sender
+  Buffer.from('recipient'), // recipient
+  Buffer.from('onChain'),  // onChainData
+  Buffer.from('offChain'), // offChainData
+  []                       // signatures (simplified for example)
+);
+```
+
+### Signer Management
+
+```typescript
+import { PublicKey } from '@solana/web3.js';
+
+// Add a signer to the Via layer
+const newSigner = new PublicKey('...');
+const addTx = await sdk.addSigner('via', SOLANA_CHAIN_ID, newSigner);
+
+// Update threshold for Chain layer
+const updateTx = await sdk.updateThreshold('chain', SOLANA_CHAIN_ID, 2);
+
+// Remove a signer from Project layer
+const removeTx = await sdk.removeSigner('project', SOLANA_CHAIN_ID, oldSigner);
 ```
 
 ## Development
 
 ```bash
 # Build the program
-anchor build
+npm run build
 
 # Deploy to network
 npm run deploy
+
+# Post-deployment setup
+npm run setup
 ```
 
 ## Configuration

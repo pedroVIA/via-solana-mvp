@@ -3,7 +3,7 @@ use anchor_lang::prelude::*;
 /// Signer registry for managing authorized signers in three-layer security model
 #[account]
 pub struct SignerRegistry {
-    /// Type of registry (VIA, Chain, or Project)
+    /// Type of registry (Via, Chain, or Project)
     pub registry_type: SignerRegistryType,
     
     /// Authority that can modify this registry
@@ -68,7 +68,7 @@ impl SignerRegistry {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub enum SignerRegistryType {
     /// Via Labs core signers - highest authority level
-    VIA,
+    Via,
     /// Chain-specific validators - chain security level
     Chain,
     /// Project-specific signers - application level
@@ -79,7 +79,7 @@ impl SignerRegistryType {
     /// Get discriminant value for PDA seeds
     pub fn discriminant(&self) -> u8 {
         match self {
-            SignerRegistryType::VIA => 0,
+            SignerRegistryType::Via => 0,
             SignerRegistryType::Chain => 1,
             SignerRegistryType::Project => 2,
         }
@@ -88,7 +88,7 @@ impl SignerRegistryType {
     /// Convert from discriminant value
     pub fn from_discriminant(value: u8) -> Option<Self> {
         match value {
-            0 => Some(SignerRegistryType::VIA),
+            0 => Some(SignerRegistryType::Via),
             1 => Some(SignerRegistryType::Chain),
             2 => Some(SignerRegistryType::Project),
             _ => None,
@@ -114,7 +114,7 @@ impl MessageSignature {
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, PartialEq, Debug)]
 pub enum SignerLayer {
     /// Via Labs layer
-    VIA,
+    Via,
     /// Chain validator layer
     Chain,
     /// Project application layer
@@ -125,7 +125,7 @@ impl SignerLayer {
     /// Convert to registry type for lookup
     pub fn to_registry_type(&self) -> SignerRegistryType {
         match self {
-            SignerLayer::VIA => SignerRegistryType::VIA,
+            SignerLayer::Via => SignerRegistryType::Via,
             SignerLayer::Chain => SignerRegistryType::Chain,
             SignerLayer::Project => SignerRegistryType::Project,
         }

@@ -45,8 +45,8 @@ pub enum GatewayError {
     #[msg("Invalid message hash")]
     InvalidMessageHash,
     
-    #[msg("VIA signature threshold not met")]
-    InsufficientVIASignatures,
+    #[msg("Via signature threshold not met")]
+    InsufficientViaSignatures,
     
     #[msg("Chain signature threshold not met")]
     InsufficientChainSignatures,

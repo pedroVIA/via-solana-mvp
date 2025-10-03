@@ -9,7 +9,7 @@ pub mod utils;
 
 use instructions::*;
 
-declare_id!("B7NYmYHNu5CmV58Y6ViYEAqtXarcoqGCTWQfKa5anPqx");
+declare_id!("J18YFrPAxxR9aWFXqsU87y1TrxBqycGS8Fv3ApMXAakA");
 
 /// Via Labs V4 Message Gateway Program
 /// 

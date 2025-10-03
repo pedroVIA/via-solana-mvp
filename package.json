@@ -14,7 +14,7 @@
     "build": "anchor build",
     "typecheck": "tsc --noEmit",
     "deploy": "anchor deploy --program-name message_gateway_v4 --program-keypair ./keypairs/program.json",
-    "setup": "npx tsx scripts/setup.ts",
+    "setup": "npx tsx tools/setup.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },

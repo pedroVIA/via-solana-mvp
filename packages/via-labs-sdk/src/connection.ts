@@ -7,8 +7,8 @@
 
 import { Connection, Keypair } from "@solana/web3.js";
 import { Program, AnchorProvider, Wallet } from "@coral-xyz/anchor";
-import type { MessageGatewayV4 } from "../target/types/message_gateway_v4.js";
-import idl from "../target/idl/message_gateway_v4.json" with { type: "json" };
+import type { MessageGatewayV4 } from "../../../target/types/message_gateway_v4.js";
+import idl from "../../../target/idl/message_gateway_v4.json" with { type: "json" };
 import fs from "fs";
 import dotenv from "dotenv";
 
