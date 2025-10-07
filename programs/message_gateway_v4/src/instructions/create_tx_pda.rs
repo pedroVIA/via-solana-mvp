@@ -5,6 +5,7 @@ use crate::errors::GatewayError;
 use crate::events::TxPdaCreated;
 use crate::state::{CounterPDA, TxIdPDA, MessageSignature};
 use crate::utils::hash::create_message_hash_for_signing;
+use crate::utils::signature::validate_signatures_tx1;
 
 pub fn handler(
     ctx: Context<CreateTxPda>,
@@ -35,8 +36,7 @@ pub fn handler(
     )?;
     
     // TX1 basic signature validation (cryptographic verification only)
-    // COMMENTED OUT FOR TESTING - No signature validation needed
-    // validate_signatures_tx1(&signatures, &message_hash, &ctx.accounts.instructions)?;
+    validate_signatures_tx1(&signatures, &message_hash, &ctx.accounts.instructions)?;
     
     // Initialize TxId PDA (proves this tx_id hasn't been processed)
     let tx_pda = &mut ctx.accounts.tx_id_pda;

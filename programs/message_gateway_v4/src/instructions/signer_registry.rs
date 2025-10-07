@@ -47,13 +47,8 @@ pub fn initialize_signer_registry(
         initial_signers.len() <= MAX_SIGNERS_PER_REGISTRY,
         GatewayError::TooManySignatures
     );
-    // Temporarily allow threshold 0 for testing - uncomment to restore original validation
-    // require!(
-    //     required_signatures > 0 && required_signatures <= initial_signers.len() as u8,
-    //     GatewayError::InvalidThreshold
-    // );
     require!(
-        required_signatures <= initial_signers.len() as u8,
+        required_signatures > 0 && required_signatures <= initial_signers.len() as u8,
         GatewayError::InvalidThreshold
     );
     

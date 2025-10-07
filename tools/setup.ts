@@ -32,12 +32,13 @@ export async function setupChain(chainId: ChainId): Promise<void> {
     } else throw e;
   }
 
-  // Initialize registries
+  // Initialize registries with threshold = 1 for signature validation
   const registryTypes: RegistryType[] = ["via", "chain", "project"];
   for (const type of registryTypes) {
     try {
-      await sdk.initializeRegistry(type, chainId);
-      console.log(`✅ ${type.toUpperCase()} registry initialized`);
+      // Use authority as the single signer with threshold = 1
+      await sdk.initializeRegistry(type, chainId, [sdk.wallet], 1);
+      console.log(`✅ ${type.toUpperCase()} registry initialized (threshold: 1)`);
     } catch (e: any) {
       if (e.message?.includes("already in use")) {
         console.log(`⚠️  ${type.toUpperCase()} registry already exists`);

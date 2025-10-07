@@ -7,10 +7,12 @@
  */
 
 import { AnchorProvider } from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, Transaction, SYSVAR_INSTRUCTIONS_PUBKEY } from "@solana/web3.js";
 import { ViaLabsClient } from "./connection.js";
 import { ViaLabsPDAs } from "./pdas.js";
 import type { ChainId, TxId, RegistryType } from "./types.js";
+import { createMessageHash, createEd25519Instruction, formatSignaturesForAnchor } from "./signatures.js";
+import type { MessageSignature } from "./signatures.js";
 
 /**
  * Main SDK class - atomic operations for Via Labs protocol
@@ -130,6 +132,107 @@ export class ViaLabsSDK {
       })
       .rpc();
     return tx;
+  }
+
+  // ============= Signature-Enabled Methods =============
+
+  /**
+   * Create TxId PDA with real Ed25519 signature validation
+   * Replaces createTxPda for production use with real signatures
+   */
+  async createTxPdaWithSignatures(
+    txId: TxId,
+    sourceChainId: ChainId,
+    destChainId: ChainId,
+    sender: Buffer,
+    recipient: Buffer,
+    onChainData: Buffer,
+    offChainData: Buffer,
+    signatures: MessageSignature[]
+  ): Promise<string> {
+    const tx = new Transaction();
+
+    // Add Ed25519 instructions first
+    const messageHash = createMessageHash(
+      txId, sourceChainId, destChainId, sender, recipient, onChainData, offChainData
+    );
+
+    for (const sig of signatures) {
+      tx.add(createEd25519Instruction(sig.signature, sig.signer, messageHash));
+    }
+
+    // Add main instruction
+    const instruction = await this.client.program.methods
+      .createTxPda(
+        txId,
+        sourceChainId,
+        destChainId,
+        sender,
+        recipient,
+        onChainData,
+        offChainData,
+        formatSignaturesForAnchor(signatures)
+      )
+      .accountsPartial({
+        txIdPda: this.pdas.getTxIdPda(sourceChainId, txId),
+        counterPda: this.pdas.getCounterPda(sourceChainId),
+        relayer: this.client.wallet.publicKey,
+        instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+      })
+      .instruction();
+
+    tx.add(instruction);
+    return await (this.client.program.provider as AnchorProvider).sendAndConfirm(tx);
+  }
+
+  /**
+   * Process message with real Ed25519 signature validation
+   * Replaces processMessage for production use with real signatures
+   */
+  async processMessageWithSignatures(
+    txId: TxId,
+    sourceChainId: ChainId,
+    destChainId: ChainId,
+    sender: Buffer,
+    recipient: Buffer,
+    onChainData: Buffer,
+    offChainData: Buffer,
+    signatures: MessageSignature[]
+  ): Promise<string> {
+    const tx = new Transaction();
+
+    const messageHash = createMessageHash(
+      txId, sourceChainId, destChainId, sender, recipient, onChainData, offChainData
+    );
+
+    for (const sig of signatures) {
+      tx.add(createEd25519Instruction(sig.signature, sig.signer, messageHash));
+    }
+
+    const instruction = await this.client.program.methods
+      .processMessage(
+        txId,
+        sourceChainId,
+        destChainId,
+        sender,
+        recipient,
+        onChainData,
+        offChainData,
+        formatSignaturesForAnchor(signatures)
+      )
+      .accountsPartial({
+        gateway: this.pdas.getGatewayPda(destChainId),
+        txIdPda: this.pdas.getTxIdPda(sourceChainId, txId),
+        viaRegistry: this.pdas.getSignerRegistryPda("via", destChainId),
+        chainRegistry: this.pdas.getSignerRegistryPda("chain", sourceChainId),
+        projectRegistry: this.pdas.getSignerRegistryPda("project", destChainId),
+        relayer: this.client.wallet.publicKey,
+        instructions: SYSVAR_INSTRUCTIONS_PUBKEY,
+      })
+      .instruction();
+
+    tx.add(instruction);
+    return await (this.client.program.provider as AnchorProvider).sendAndConfirm(tx);
   }
 
   // ============= Registry Operations =============

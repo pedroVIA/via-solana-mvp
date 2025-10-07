@@ -56,26 +56,34 @@ fn parse_ed25519_instruction(
     expected_signer: &Pubkey,
     expected_message: &[u8; 32],
 ) -> Option<bool> {
-    // Ed25519 instruction format:
-    // [0..16]   - signature offset info
-    // [16..80]  - 64-byte signature
-    // [80..112] - 32-byte pubkey
-    // [112..]   - message data
-    
-    if ix.data.len() < 112 + expected_message.len() {
+    // Official Ed25519 instruction format from debug analysis:
+    // [0-15]: Header with Ed25519SignatureOffsets
+    // [16-47]: 32-byte pubkey (at offset 16)
+    // [48-111]: 64-byte signature (at offset 48)
+    // [112+]: 32-byte message (at offset 112)
+
+    if ix.data.len() < 144 {
+        msg!("Ed25519 instruction too short: {} < 144", ix.data.len());
         return Some(false);
     }
-    
-    let ix_signature = &ix.data[16..80];
-    let ix_pubkey = &ix.data[80..112];
-    let ix_message = &ix.data[112..];
-    
+
+    // Extract components using correct offsets
+    let ix_pubkey = &ix.data[16..48];      // 32 bytes at offset 16
+    let ix_signature = &ix.data[48..112];  // 64 bytes at offset 48
+    let ix_message = &ix.data[112..144];   // 32 bytes at offset 112
+
+    // Debug message comparison
+    msg!("Expected message: {:?}", &expected_message[0..8]);
+    msg!("Found message: {:?}", &ix_message[0..8]);
+
     // Verify all components match
     let signature_matches = ix_signature == expected_signature;
     let pubkey_matches = ix_pubkey == expected_signer.as_ref();
     let message_matches = ix_message == expected_message;
-    
-    
+
+    msg!("Ed25519 parsing with correct offsets: sig={}, pubkey={}, msg={}",
+         signature_matches, pubkey_matches, message_matches);
+
     Some(signature_matches && pubkey_matches && message_matches)
 }
 
@@ -88,16 +96,16 @@ pub fn validate_three_layer_signatures(
     project_registry: Option<&SignerRegistry>,
     ix_sysvar_account: &AccountInfo,
 ) -> Result<ValidationResult> {
-    // Input validation - COMMENTED OUT FOR TESTING
-    // require!(
-    //     !signatures.is_empty() && signatures.len() <= MAX_SIGNATURES_PER_MESSAGE,
-    //     GatewayError::TooManySignatures
-    // );
-    //
-    // require!(
-    //     signatures.len() >= MIN_SIGNATURES_REQUIRED,
-    //     GatewayError::TooFewSignatures
-    // );
+    // Input validation
+    require!(
+        !signatures.is_empty() && signatures.len() <= MAX_SIGNATURES_PER_MESSAGE,
+        GatewayError::TooManySignatures
+    );
+
+    require!(
+        signatures.len() >= MIN_SIGNATURES_REQUIRED,
+        GatewayError::TooFewSignatures
+    );
     
     validate_message_hash(message_hash)?;
     
@@ -112,11 +120,6 @@ pub fn validate_three_layer_signatures(
     let mut validation_result = ValidationResult::new();
     let mut used_signers = Vec::new();
 
-    // TESTING MODE: Skip signature validation if empty signatures array
-    if signatures.is_empty() {
-        msg!("TESTING MODE: Skipping signature validation for empty signatures array");
-        return Ok(validation_result);
-    }
 
     // Validate each signature
     for signature in signatures {
